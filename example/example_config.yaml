@@ -1,0 +1,9 @@
+Protocol: test
+Address: test
+FixedPublicAddress: tet
+HostNetwork:
+  MinTimeout: 22
+  MaxTimeout: 3
+  TimeoutMult: 4
+  SignMessages: true
+  HandshakeSessionTTL: 23
