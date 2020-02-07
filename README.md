@@ -1,0 +1,2 @@
+# insconfig
+Config management library
