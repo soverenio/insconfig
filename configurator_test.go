@@ -68,6 +68,7 @@ func Test_Load(t *testing.T) {
 
 	t.Run("ENV overriding", func(t *testing.T) {
 		_ = os.Setenv("TESTPREFIX_LEVEL2_LEVEL2TEXT", "newTextValue")
+		defer os.Unsetenv("TESTPREFIX_LEVEL2_LEVEL2TEXT")
 		params := insconfig.Params{
 			ConfigStruct: cfgStruct{},
 			EnvPrefix:    "testprefix",
@@ -83,8 +84,51 @@ func Test_Load(t *testing.T) {
 		require.Equal(t, cfg.Level2.Level3.Level3text, "text3")
 	})
 
+	t.Run("ENV has values, that is not in config, but it should", func(t *testing.T) {
+		_ = os.Setenv("TESTPREFIX_LEVEL1TEXT", "newTextValue1")
+		defer os.Unsetenv("TESTPREFIX_LEVEL1TEXT")
+		params := insconfig.Params{
+			ConfigStruct: cfgStruct{},
+			EnvPrefix:    "testprefix",
+		}
+
+		insConfigurator := insconfig.NewInsConfigurator(params, testPathGetter{"test_config_wrong2.yaml"})
+		parsedConf, err := insConfigurator.Load()
+		require.NoError(t, err)
+		cfg := parsedConf.(*cfgStruct)
+		insConfigurator.PrintConfig(cfg)
+		require.Equal(t, cfg.Level1text, "newTextValue1")
+		require.Equal(t, cfg.Level2.Level2text, "text2")
+		require.Equal(t, cfg.Level2.Level3.Level3text, "text3")
+	})
+
+	t.Run("ENV only, no config filez", func(t *testing.T) {
+		_ = os.Setenv("TESTPREFIX_LEVEL1TEXT", "newTextValue1")
+		_ = os.Setenv("TESTPREFIX_LEVEL2_LEVEL2TEXT", "newTextValue2")
+		_ = os.Setenv("TESTPREFIX_LEVEL2_LEVEL3_LEVEL3TEXT", "newTextValue3")
+		defer os.Unsetenv("TESTPREFIX_LEVEL1TEXT")
+		defer os.Unsetenv("TESTPREFIX_LEVEL2_LEVEL2TEXT")
+		defer os.Unsetenv("TESTPREFIX_LEVEL2_LEVEL3_LEVEL3TEXT")
+
+		params := insconfig.Params{
+			ConfigStruct: cfgStruct{},
+			EnvPrefix:    "testprefix",
+		}
+
+		insConfigurator := insconfig.NewInsConfigurator(params, testPathGetter{""})
+		parsedConf, err := insConfigurator.Load()
+		require.NoError(t, err)
+		cfg := parsedConf.(*cfgStruct)
+		insConfigurator.PrintConfig(cfg)
+		require.Equal(t, cfg.Level1text, "newTextValue1")
+		require.Equal(t, cfg.Level2.Level2text, "newTextValue2")
+		require.Equal(t, cfg.Level2.Level3.Level3text, "newTextValue3")
+	})
+
 	t.Run("extra env fail", func(t *testing.T) {
 		_ = os.Setenv("TESTPREFIX_NONEXISTENT_VALUE", "123")
+		defer os.Unsetenv("TESTPREFIX_NONEXISTENT_VALUE")
+
 		params := insconfig.Params{
 			ConfigStruct: cfgStruct{},
 			EnvPrefix:    "testprefix",

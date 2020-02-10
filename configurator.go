@@ -100,7 +100,7 @@ func (i *insConfigurator) load(path string) (ConfigStruct, error) {
 
 	v.SetConfigFile(path)
 	if err := v.ReadInConfig(); err != nil {
-		return nil, errors.Wrapf(err, "failed to load config")
+		fmt.Printf("failed to load config from '%s'", path)
 	}
 	actual := i.params.ConfigStruct.GetConfig()
 	i.params.ViperHooks = append(i.params.ViperHooks, mapstructure.StringToTimeDurationHookFunc(), mapstructure.StringToSliceHookFunc(","))
@@ -115,14 +115,22 @@ func (i *insConfigurator) load(path string) (ConfigStruct, error) {
 		return nil, err
 	}
 
-	if err := i.checkNoExtraENVValues(configStructKeys); err != nil {
+	if err := i.checkNoExtraENVValues(configStructKeys, v); err != nil {
 		return nil, err
 	}
 
+	// Second Unmarshal needed because of bug https://github.com/spf13/viper/issues/761
+	// This should be evaluated after manual values overriding is done
+	err = v.UnmarshalExact(actual, viper.DecodeHook(mapstructure.ComposeDecodeHookFunc(
+		i.params.ViperHooks...,
+	)))
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to unmarshal config file into configuration structure 2")
+	}
 	return actual.(ConfigStruct), nil
 }
 
-func (i *insConfigurator) checkNoExtraENVValues(structKeys []string) error {
+func (i *insConfigurator) checkNoExtraENVValues(structKeys []string, v *viper.Viper) error {
 	prefixLen := len(i.params.EnvPrefix)
 	for _, e := range os.Environ() {
 		if len(e) > prefixLen && e[0:prefixLen]+"_" == strings.ToUpper(i.params.EnvPrefix)+"_" {
@@ -132,6 +140,8 @@ func (i *insConfigurator) checkNoExtraENVValues(structKeys []string) error {
 			for _, val := range structKeys {
 				if strings.ToLower(val) == key {
 					found = true
+					// This manually sets value from ENV and overrides everything, this temporarily fix issue https://github.com/spf13/viper/issues/761
+					v.Set(key, kv[1])
 					break
 				}
 			}
