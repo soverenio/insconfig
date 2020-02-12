@@ -18,7 +18,7 @@ package main
 
 import (
 	"flag"
-	"strings"
+	"fmt"
 
 	"github.com/insolar/insconfig"
 )
@@ -48,22 +48,16 @@ func (c Config) GetConfig() interface{} {
 func main() {
 	params := insconfig.Params{
 		ConfigStruct: Config{},
-		EnvPrefix:    "observer",
+		EnvPrefix:    "example",
+		ConfigPathGetter: insconfig.DefaultConfigPathGetter{
+			GoFlags: flag.CommandLine,
+		},
 	}
-	insConfigurator := insconfig.NewInsConfigurator(params, insconfig.DefaultConfigPathGetter{
-		GoFlags: flag.CommandLine,
-	})
+	insConfigurator := insconfig.NewInsConfigurator(params)
 	parsedConf, err := insConfigurator.Load()
 	if err != nil {
 		panic(err)
 	}
 	cfg := parsedConf.(*Config)
-	insConfigurator.PrintConfig(cfg)
-
-	if testflag1 == nil || len(*testflag1) == 0 || len(strings.TrimSpace(*testflag1)) == 0 {
-		panic("testflag1 should be provided")
-	}
-	if testflag2 == nil || len(*testflag2) == 0 || len(strings.TrimSpace(*testflag2)) == 0 {
-		panic("testflag2 should be provided")
-	}
+	fmt.Println(insConfigurator.ToString(cfg))
 }

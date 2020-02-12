@@ -52,15 +52,15 @@ func (g testPathGetter) GetConfigPath() string {
 func Test_Load(t *testing.T) {
 	t.Run("happy", func(t *testing.T) {
 		params := insconfig.Params{
-			ConfigStruct: cfgStruct{},
-			EnvPrefix:    "textprefix",
+			ConfigStruct:     cfgStruct{},
+			EnvPrefix:        "testprefix",
+			ConfigPathGetter: testPathGetter{"test_config.yaml"},
 		}
 
-		insConfigurator := insconfig.NewInsConfigurator(params, testPathGetter{"test_config.yaml"})
+		insConfigurator := insconfig.NewInsConfigurator(params)
 		parsedConf, err := insConfigurator.Load()
 		require.NoError(t, err)
 		cfg := parsedConf.(*cfgStruct)
-		insConfigurator.PrintConfig(cfg)
 		require.Equal(t, cfg.Level1text, "text1")
 		require.Equal(t, cfg.Level2.Level2text, "text2")
 		require.Equal(t, cfg.Level2.Level3.Level3text, "text3")
@@ -70,15 +70,15 @@ func Test_Load(t *testing.T) {
 		_ = os.Setenv("TESTPREFIX_LEVEL2_LEVEL2TEXT", "newTextValue")
 		defer os.Unsetenv("TESTPREFIX_LEVEL2_LEVEL2TEXT")
 		params := insconfig.Params{
-			ConfigStruct: cfgStruct{},
-			EnvPrefix:    "testprefix",
+			ConfigStruct:     cfgStruct{},
+			EnvPrefix:        "testprefix",
+			ConfigPathGetter: testPathGetter{"test_config.yaml"},
 		}
 
-		insConfigurator := insconfig.NewInsConfigurator(params, testPathGetter{"test_config.yaml"})
+		insConfigurator := insconfig.NewInsConfigurator(params)
 		parsedConf, err := insConfigurator.Load()
 		require.NoError(t, err)
 		cfg := parsedConf.(*cfgStruct)
-		insConfigurator.PrintConfig(cfg)
 		require.Equal(t, cfg.Level1text, "text1")
 		require.Equal(t, cfg.Level2.Level2text, "newTextValue")
 		require.Equal(t, cfg.Level2.Level3.Level3text, "text3")
@@ -88,15 +88,15 @@ func Test_Load(t *testing.T) {
 		_ = os.Setenv("TESTPREFIX_LEVEL1TEXT", "newTextValue1")
 		defer os.Unsetenv("TESTPREFIX_LEVEL1TEXT")
 		params := insconfig.Params{
-			ConfigStruct: cfgStruct{},
-			EnvPrefix:    "testprefix",
+			ConfigStruct:     cfgStruct{},
+			EnvPrefix:        "testprefix",
+			ConfigPathGetter: testPathGetter{"test_config_wrong2.yaml"},
 		}
 
-		insConfigurator := insconfig.NewInsConfigurator(params, testPathGetter{"test_config_wrong2.yaml"})
+		insConfigurator := insconfig.NewInsConfigurator(params)
 		parsedConf, err := insConfigurator.Load()
 		require.NoError(t, err)
 		cfg := parsedConf.(*cfgStruct)
-		insConfigurator.PrintConfig(cfg)
 		require.Equal(t, cfg.Level1text, "newTextValue1")
 		require.Equal(t, cfg.Level2.Level2text, "text2")
 		require.Equal(t, cfg.Level2.Level3.Level3text, "text3")
@@ -111,15 +111,15 @@ func Test_Load(t *testing.T) {
 		defer os.Unsetenv("TESTPREFIX_LEVEL2_LEVEL3_LEVEL3TEXT")
 
 		params := insconfig.Params{
-			ConfigStruct: cfgStruct{},
-			EnvPrefix:    "testprefix",
+			ConfigStruct:     cfgStruct{},
+			EnvPrefix:        "testprefix",
+			ConfigPathGetter: testPathGetter{""},
 		}
 
-		insConfigurator := insconfig.NewInsConfigurator(params, testPathGetter{""})
+		insConfigurator := insconfig.NewInsConfigurator(params)
 		parsedConf, err := insConfigurator.Load()
 		require.NoError(t, err)
 		cfg := parsedConf.(*cfgStruct)
-		insConfigurator.PrintConfig(cfg)
 		require.Equal(t, cfg.Level1text, "newTextValue1")
 		require.Equal(t, cfg.Level2.Level2text, "newTextValue2")
 		require.Equal(t, cfg.Level2.Level3.Level3text, "newTextValue3")
@@ -130,11 +130,12 @@ func Test_Load(t *testing.T) {
 		defer os.Unsetenv("TESTPREFIX_NONEXISTENT_VALUE")
 
 		params := insconfig.Params{
-			ConfigStruct: cfgStruct{},
-			EnvPrefix:    "testprefix",
+			ConfigStruct:     cfgStruct{},
+			EnvPrefix:        "testprefix",
+			ConfigPathGetter: testPathGetter{"test_config.yaml"},
 		}
 
-		insConfigurator := insconfig.NewInsConfigurator(params, testPathGetter{"test_config.yaml"})
+		insConfigurator := insconfig.NewInsConfigurator(params)
 		_, err := insConfigurator.Load()
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "nonexistent")
@@ -142,11 +143,12 @@ func Test_Load(t *testing.T) {
 
 	t.Run("extra in file fail", func(t *testing.T) {
 		params := insconfig.Params{
-			ConfigStruct: cfgStruct{},
-			EnvPrefix:    "testprefix",
+			ConfigStruct:     cfgStruct{},
+			EnvPrefix:        "testprefix",
+			ConfigPathGetter: testPathGetter{"test_config_wrong.yaml"},
 		}
 
-		insConfigurator := insconfig.NewInsConfigurator(params, testPathGetter{"test_config_wrong.yaml"})
+		insConfigurator := insconfig.NewInsConfigurator(params)
 		_, err := insConfigurator.Load()
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "nonexistent")
@@ -154,13 +156,28 @@ func Test_Load(t *testing.T) {
 
 	t.Run("not set in file fail", func(t *testing.T) {
 		params := insconfig.Params{
-			ConfigStruct: cfgStruct{},
-			EnvPrefix:    "testprefix",
+			ConfigStruct:     cfgStruct{},
+			EnvPrefix:        "testprefix",
+			ConfigPathGetter: testPathGetter{"test_config_wrong2.yaml"},
 		}
 
-		insConfigurator := insconfig.NewInsConfigurator(params, testPathGetter{"test_config_wrong2.yaml"})
+		insConfigurator := insconfig.NewInsConfigurator(params)
 		_, err := insConfigurator.Load()
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "Level1text")
+	})
+
+	t.Run("required file not found", func(t *testing.T) {
+		params := insconfig.Params{
+			ConfigStruct:     cfgStruct{},
+			EnvPrefix:        "testprefix",
+			ConfigPathGetter: testPathGetter{"nonexstent.yaml"},
+			FileRequired:     true,
+		}
+
+		insConfigurator := insconfig.NewInsConfigurator(params)
+		_, err := insConfigurator.Load()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "nonexstent.yaml")
 	})
 }
