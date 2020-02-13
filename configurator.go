@@ -160,12 +160,25 @@ func (i *insConfigurator) checkNoExtraENVValues(structKeys []string) error {
 
 func (i *insConfigurator) checkAllValuesIsSet() ([]string, error) {
 	names := deepFieldNames(i.params.ConfigStruct, "")
-	for _, val := range names {
-		if !i.viper.IsSet(val) {
-			return nil, errors.New(fmt.Sprintf("Value not found in config: %s", val))
+	for _, keyName := range names {
+		if !i.viper.IsSet(keyName) {
+			// Due to a bug https://github.com/spf13/viper/issues/447 we can't use InConfig, so
+			if !stringInSlice(strings.ToLower(keyName), i.viper.AllKeys()) {
+				return nil, errors.New(fmt.Sprintf("Value not found in config: %s", keyName))
+			}
+			// Value of this key is "null" but it set in config file
 		}
 	}
 	return names, nil
+}
+
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
 }
 
 func deepFieldNames(iface interface{}, prefix string) []string {

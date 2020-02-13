@@ -27,6 +27,7 @@ import (
 
 type Level3 struct {
 	Level3text string
+	NullString *string
 }
 type Level2 struct {
 	Level2text string
@@ -102,13 +103,15 @@ func Test_Load(t *testing.T) {
 		require.Equal(t, cfg.Level2.Level3.Level3text, "text3")
 	})
 
-	t.Run("ENV only, no config filez", func(t *testing.T) {
+	t.Run("ENV only, no config files", func(t *testing.T) {
 		_ = os.Setenv("TESTPREFIX_LEVEL1TEXT", "newTextValue1")
 		_ = os.Setenv("TESTPREFIX_LEVEL2_LEVEL2TEXT", "newTextValue2")
 		_ = os.Setenv("TESTPREFIX_LEVEL2_LEVEL3_LEVEL3TEXT", "newTextValue3")
+		_ = os.Setenv("TESTPREFIX_LEVEL2_LEVEL3_NULLSTRING", "text")
 		defer os.Unsetenv("TESTPREFIX_LEVEL1TEXT")
 		defer os.Unsetenv("TESTPREFIX_LEVEL2_LEVEL2TEXT")
 		defer os.Unsetenv("TESTPREFIX_LEVEL2_LEVEL3_LEVEL3TEXT")
+		defer os.Unsetenv("TESTPREFIX_LEVEL2_LEVEL3_NULLSTRING")
 
 		params := insconfig.Params{
 			ConfigStruct:     cfgStruct{},
@@ -179,5 +182,19 @@ func Test_Load(t *testing.T) {
 		_, err := insConfigurator.Load()
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "nonexstent.yaml")
+	})
+
+	t.Run("null string test", func(t *testing.T) {
+		params := insconfig.Params{
+			ConfigStruct:     cfgStruct{},
+			EnvPrefix:        "testprefix",
+			ConfigPathGetter: testPathGetter{"test_config2.yaml"},
+		}
+
+		insConfigurator := insconfig.NewInsConfigurator(params)
+		parsedConf, err := insConfigurator.Load()
+		require.NoError(t, err)
+		cfg := parsedConf.(*cfgStruct)
+		require.Nil(t, cfg.Level2.Level3.NullString)
 	})
 }
