@@ -38,17 +38,9 @@ type CfgStruct struct {
 	Level2     Level2
 }
 
-func (c CfgStruct) GetConfig() interface{} {
-	return &c
-}
-
 type anonymousEmbeddedStruct struct {
 	CfgStruct `mapstructure:",squash"`
 	Level4    string
-}
-
-func (c anonymousEmbeddedStruct) GetConfig() interface{} {
-	return &c
 }
 
 type testPathGetter struct {
@@ -61,16 +53,15 @@ func (g testPathGetter) GetConfigPath() string {
 
 func Test_Load(t *testing.T) {
 	t.Run("happy", func(t *testing.T) {
+		cfg := CfgStruct{}
 		params := insconfig.Params{
-			ConfigStruct:     CfgStruct{},
 			EnvPrefix:        "testprefix",
 			ConfigPathGetter: testPathGetter{"test_config.yaml"},
 		}
 
-		insConfigurator := insconfig.NewInsConfigurator(params)
-		parsedConf, err := insConfigurator.Load()
+		insConfigurator := insconfig.New(params)
+		err := insConfigurator.Load(&cfg)
 		require.NoError(t, err)
-		cfg := parsedConf.(*CfgStruct)
 		require.Equal(t, cfg.Level1text, "text1")
 		require.Equal(t, cfg.Level2.Level2text, "text2")
 		require.Equal(t, cfg.Level2.Level3.Level3text, "text3")
@@ -79,16 +70,15 @@ func Test_Load(t *testing.T) {
 	t.Run("ENV overriding", func(t *testing.T) {
 		_ = os.Setenv("TESTPREFIX_LEVEL2_LEVEL2TEXT", "newTextValue")
 		defer os.Unsetenv("TESTPREFIX_LEVEL2_LEVEL2TEXT")
+		cfg := CfgStruct{}
 		params := insconfig.Params{
-			ConfigStruct:     CfgStruct{},
 			EnvPrefix:        "testprefix",
 			ConfigPathGetter: testPathGetter{"test_config.yaml"},
 		}
 
-		insConfigurator := insconfig.NewInsConfigurator(params)
-		parsedConf, err := insConfigurator.Load()
+		insConfigurator := insconfig.New(params)
+		err := insConfigurator.Load(&cfg)
 		require.NoError(t, err)
-		cfg := parsedConf.(*CfgStruct)
 		require.Equal(t, cfg.Level1text, "text1")
 		require.Equal(t, cfg.Level2.Level2text, "newTextValue")
 		require.Equal(t, cfg.Level2.Level3.Level3text, "text3")
@@ -97,16 +87,15 @@ func Test_Load(t *testing.T) {
 	t.Run("ENV has values, that is not in config, but it should", func(t *testing.T) {
 		_ = os.Setenv("TESTPREFIX_LEVEL1TEXT", "newTextValue1")
 		defer os.Unsetenv("TESTPREFIX_LEVEL1TEXT")
+		cfg := CfgStruct{}
 		params := insconfig.Params{
-			ConfigStruct:     CfgStruct{},
 			EnvPrefix:        "testprefix",
 			ConfigPathGetter: testPathGetter{"test_config_wrong2.yaml"},
 		}
 
-		insConfigurator := insconfig.NewInsConfigurator(params)
-		parsedConf, err := insConfigurator.Load()
+		insConfigurator := insconfig.New(params)
+		err := insConfigurator.Load(&cfg)
 		require.NoError(t, err)
-		cfg := parsedConf.(*CfgStruct)
 		require.Equal(t, cfg.Level1text, "newTextValue1")
 		require.Equal(t, cfg.Level2.Level2text, "text2")
 		require.Equal(t, cfg.Level2.Level3.Level3text, "text3")
@@ -122,16 +111,16 @@ func Test_Load(t *testing.T) {
 		defer os.Unsetenv("TESTPREFIX_LEVEL2_LEVEL3_LEVEL3TEXT")
 		defer os.Unsetenv("TESTPREFIX_LEVEL2_LEVEL3_NULLSTRING")
 
+		cfg := CfgStruct{}
 		params := insconfig.Params{
-			ConfigStruct:     CfgStruct{},
 			EnvPrefix:        "testprefix",
 			ConfigPathGetter: testPathGetter{""},
+			FileNotRequired:  true,
 		}
 
-		insConfigurator := insconfig.NewInsConfigurator(params)
-		parsedConf, err := insConfigurator.Load()
+		insConfigurator := insconfig.New(params)
+		err := insConfigurator.Load(&cfg)
 		require.NoError(t, err)
-		cfg := parsedConf.(*CfgStruct)
 		require.Equal(t, cfg.Level1text, "newTextValue1")
 		require.Equal(t, cfg.Level2.Level2text, "newTextValue2")
 		require.Equal(t, cfg.Level2.Level3.Level3text, "newTextValue3")
@@ -141,83 +130,96 @@ func Test_Load(t *testing.T) {
 		_ = os.Setenv("TESTPREFIX_NONEXISTENT_VALUE", "123")
 		defer os.Unsetenv("TESTPREFIX_NONEXISTENT_VALUE")
 
+		cfg := CfgStruct{}
 		params := insconfig.Params{
-			ConfigStruct:     CfgStruct{},
 			EnvPrefix:        "testprefix",
 			ConfigPathGetter: testPathGetter{"test_config.yaml"},
 		}
 
-		insConfigurator := insconfig.NewInsConfigurator(params)
-		_, err := insConfigurator.Load()
+		insConfigurator := insconfig.New(params)
+		err := insConfigurator.Load(&cfg)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "nonexistent")
 	})
 
 	t.Run("extra in file fail", func(t *testing.T) {
+		cfg := CfgStruct{}
 		params := insconfig.Params{
-			ConfigStruct:     CfgStruct{},
 			EnvPrefix:        "testprefix",
 			ConfigPathGetter: testPathGetter{"test_config_wrong.yaml"},
 		}
 
-		insConfigurator := insconfig.NewInsConfigurator(params)
-		_, err := insConfigurator.Load()
+		insConfigurator := insconfig.New(params)
+		err := insConfigurator.Load(&cfg)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "nonexistent")
 	})
 
 	t.Run("not set in file fail", func(t *testing.T) {
+		cfg := CfgStruct{}
 		params := insconfig.Params{
-			ConfigStruct:     CfgStruct{},
 			EnvPrefix:        "testprefix",
 			ConfigPathGetter: testPathGetter{"test_config_wrong2.yaml"},
 		}
 
-		insConfigurator := insconfig.NewInsConfigurator(params)
-		_, err := insConfigurator.Load()
+		insConfigurator := insconfig.New(params)
+		err := insConfigurator.Load(&cfg)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "Level1text")
 	})
 
 	t.Run("required file not found", func(t *testing.T) {
+		cfg := CfgStruct{}
 		params := insconfig.Params{
-			ConfigStruct:     CfgStruct{},
 			EnvPrefix:        "testprefix",
 			ConfigPathGetter: testPathGetter{"nonexistent.yaml"},
-			FileRequired:     true,
 		}
 
-		insConfigurator := insconfig.NewInsConfigurator(params)
-		_, err := insConfigurator.Load()
+		insConfigurator := insconfig.New(params)
+		err := insConfigurator.Load(&cfg)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "nonexistent.yaml")
 	})
 
 	t.Run("null string test", func(t *testing.T) {
+		cfg := CfgStruct{}
 		params := insconfig.Params{
-			ConfigStruct:     CfgStruct{},
 			EnvPrefix:        "testprefix",
 			ConfigPathGetter: testPathGetter{"test_config2.yaml"},
 		}
 
-		insConfigurator := insconfig.NewInsConfigurator(params)
-		parsedConf, err := insConfigurator.Load()
+		insConfigurator := insconfig.New(params)
+		err := insConfigurator.Load(&cfg)
 		require.NoError(t, err)
-		cfg := parsedConf.(*CfgStruct)
 		require.Nil(t, cfg.Level2.Level3.NullString)
 	})
 
 	t.Run("embedded struct flatten test", func(t *testing.T) {
+		cfg := anonymousEmbeddedStruct{}
 		params := insconfig.Params{
-			ConfigStruct:     anonymousEmbeddedStruct{},
 			EnvPrefix:        "testprefix",
 			ConfigPathGetter: testPathGetter{"test_config3.yaml"},
 		}
 
-		insConfigurator := insconfig.NewInsConfigurator(params)
-		parsedConf, err := insConfigurator.Load()
+		insConfigurator := insconfig.New(params)
+		err := insConfigurator.Load(&cfg)
 		require.NoError(t, err)
-		cfg := parsedConf.(*anonymousEmbeddedStruct)
 		require.Equal(t, cfg.Level4, "text4")
+	})
+
+	t.Run("embedded struct override by env", func(t *testing.T) {
+		_ = os.Setenv("TESTPREFIX_LEVEL2_LEVEL2TEXT", "newTextValue")
+		defer os.Unsetenv("TESTPREFIX_LEVEL2_LEVEL2TEXT")
+
+		cfg := anonymousEmbeddedStruct{}
+		params := insconfig.Params{
+			EnvPrefix:        "testprefix",
+			ConfigPathGetter: testPathGetter{"test_config3.yaml"},
+		}
+
+		insConfigurator := insconfig.New(params)
+		err := insConfigurator.Load(&cfg)
+		require.NoError(t, err)
+		require.Equal(t, cfg.Level2.Level2text, "newTextValue")
 	})
 }

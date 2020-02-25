@@ -41,23 +41,18 @@ type HostNetwork struct {
 	HandshakeSessionTTL int32
 }
 
-func (c Config) GetConfig() interface{} {
-	return &c
-}
-
 func main() {
+	mconf := Config{}
 	params := insconfig.Params{
-		ConfigStruct: Config{},
-		EnvPrefix:    "example",
-		ConfigPathGetter: insconfig.DefaultConfigPathGetter{
+		EnvPrefix: "example",
+		ConfigPathGetter: &insconfig.FlagPathGetter{
 			GoFlags: flag.CommandLine,
 		},
 	}
-	insConfigurator := insconfig.NewInsConfigurator(params)
-	parsedConf, err := insConfigurator.Load()
-	if err != nil {
+	insConfigurator := insconfig.New(params)
+	if err := insConfigurator.Load(&mconf); err != nil {
 		panic(err)
 	}
-	cfg := parsedConf.(*Config)
-	fmt.Println(insConfigurator.ToString(cfg))
+	fmt.Println(*testflag1)
+	fmt.Println(insConfigurator.ToYaml(mconf))
 }
