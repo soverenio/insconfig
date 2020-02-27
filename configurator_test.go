@@ -142,6 +142,25 @@ func Test_Load(t *testing.T) {
 		require.Contains(t, err.Error(), "nonexistent")
 	})
 
+	t.Run("extra env with empty value, fails", func(t *testing.T) {
+		_ = os.Setenv("TESTPREFIX_NONEXISTENT_VALUE1", "")
+		_ = os.Setenv("TESTPREFIX_NONEXISTENT_VALUE2", "")
+		defer os.Unsetenv("TESTPREFIX_NONEXISTENT_VALUE1")
+		defer os.Unsetenv("TESTPREFIX_NONEXISTENT_VALUE2")
+
+		cfg := CfgStruct{}
+		params := insconfig.Params{
+			EnvPrefix:        "testprefix",
+			ConfigPathGetter: testPathGetter{"test_config.yaml"},
+		}
+
+		insConfigurator := insconfig.New(params)
+		err := insConfigurator.Load(&cfg)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "nonexistent.value1")
+		require.Contains(t, err.Error(), "nonexistent.value2")
+	})
+
 	t.Run("extra in file fail", func(t *testing.T) {
 		cfg := CfgStruct{}
 		params := insconfig.Params{
@@ -165,6 +184,8 @@ func Test_Load(t *testing.T) {
 		insConfigurator := insconfig.New(params)
 		err := insConfigurator.Load(&cfg)
 		require.Error(t, err)
+		println(err.Error())
+
 		require.Contains(t, err.Error(), "Level1text")
 	})
 

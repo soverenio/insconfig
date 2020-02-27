@@ -110,45 +110,48 @@ func (i *insConfigurator) load(path string, configStruct interface{}) error {
 }
 
 func (i *insConfigurator) checkNoExtraENVValues(structKeys []string) error {
+	var errorKeys []string
 	prefixLen := len(i.params.EnvPrefix)
 	for _, e := range os.Environ() {
 		if len(e) > prefixLen && e[0:prefixLen]+"_" == strings.ToUpper(i.params.EnvPrefix)+"_" {
 			kv := strings.SplitN(e, "=", 2)
 			key := strings.ReplaceAll(strings.Replace(strings.ToLower(kv[0]), i.params.EnvPrefix+"_", "", 1), "_", ".")
-			found := false
-			for _, val := range structKeys {
-				if strings.ToLower(val) == key {
-					found = true
-					// This manually sets value from ENV and overrides everything, this temporarily fix issue https://github.com/spf13/viper/issues/761
-					i.viper.Set(key, kv[1])
-					break
-				}
-			}
-			if !found {
-				return errors.New(fmt.Sprintf("Value not found in config: %s", key))
+			if stringInSlice(key, structKeys) {
+				// This manually sets value from ENV and overrides everything, this temporarily fix issue https://github.com/spf13/viper/issues/761
+				i.viper.Set(key, kv[1])
+			} else {
+				errorKeys = append(errorKeys, key)
 			}
 		}
+	}
+	if len(errorKeys) > 0 {
+		return errors.New(fmt.Sprintf("Wrong config keys found in ENV: %s", strings.Join(errorKeys, ", ")))
 	}
 	return nil
 }
 
 func (i *insConfigurator) checkAllValuesIsSet(configStruct interface{}) ([]string, error) {
+	var errorKeys []string
 	names := deepFieldNames(configStruct, "")
+	allKeys := i.viper.AllKeys()
 	for _, keyName := range names {
 		if !i.viper.IsSet(keyName) {
 			// Due to a bug https://github.com/spf13/viper/issues/447 we can't use InConfig, so
-			if !stringInSlice(strings.ToLower(keyName), i.viper.AllKeys()) {
-				return nil, errors.New(fmt.Sprintf("Value not found in config: %s", keyName))
+			if !stringInSlice(keyName, allKeys) {
+				errorKeys = append(errorKeys, keyName)
 			}
-			// Value of this key is "null" but it set in config file
+			// Value of this key is "null" but it's set in config file
 		}
+	}
+	if len(errorKeys) > 0 {
+		return nil, errors.New(fmt.Sprintf("Keys is not defined in config: %s", strings.Join(errorKeys, ", ")))
 	}
 	return names, nil
 }
 
 func stringInSlice(a string, list []string) bool {
 	for _, b := range list {
-		if b == a {
+		if strings.ToLower(b) == strings.ToLower(a) {
 			return true
 		}
 	}
