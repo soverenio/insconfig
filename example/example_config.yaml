@@ -7,3 +7,10 @@ HostNetwork:
   TimeoutMult: 4
   SignMessages: true
   HandshakeSessionTTL: 23
+Clients:
+  first:
+    ID: 123
+    Address: test-123
+  second:
+    ID: 456
+    Address: test-456

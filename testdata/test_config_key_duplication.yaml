@@ -1,0 +1,9 @@
+one:
+  first:
+    str: first-str
+    num: 1
+    flag: false
+  first:
+    str: second-str
+    num: 2
+    flag: true

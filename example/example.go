@@ -31,6 +31,7 @@ type Config struct {
 	Address            string
 	FixedPublicAddress string
 	HostNetwork        HostNetwork
+	Clients            map[string]Client
 }
 
 type HostNetwork struct {
@@ -39,6 +40,11 @@ type HostNetwork struct {
 	TimeoutMult         int
 	SignMessages        bool
 	HandshakeSessionTTL int32
+}
+
+type Client struct {
+	ID      int
+	Address string
 }
 
 func main() {

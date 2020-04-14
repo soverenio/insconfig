@@ -2,7 +2,7 @@
 Config management library.
 This is the wrapper on https://github.com/spf13/viper library
 
-Key features:
+## Key features
 - .yaml format
 - No default config path, path is explicitly set by --config/-c flag. Optionally you can override this by implementing ConfigPathGetter (look at tests)
 - Environment overrides file values
@@ -17,12 +17,12 @@ Key features:
 - Doesn't support overriding config on runtime
 - Supports custom viper decode hooks
 
-# Running example 
+## Running example 
 ```
 go run ./example/example.go --config="./example/example_config.yaml"
 ```
 
-# Usage
+## Usage
 
 With custom go flags (from example.go)
 ```go
@@ -90,3 +90,9 @@ func read(){
     println(insconfig.ToString(cfg))
 }
 ```
+### Using maps in config
+You can use a map in config but there are limitations:
+- only string keys are allowed
+- a map can be on the upper level
+- a map can be the property of a struct
+- nested maps (directly or through struct) are not allowed
