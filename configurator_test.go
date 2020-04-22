@@ -17,12 +17,13 @@
 package insconfig_test
 
 import (
+	"bytes"
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/insolar/insconfig"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
 
 type Level3 struct {
@@ -630,4 +631,29 @@ func Test_Load(t *testing.T) {
 			require.Contains(t, err.Error(), `key "first" already set in map`)
 		})
 	})
+}
+
+type Y struct {
+	F int `insconfig:"111| the F comment"`
+}
+
+type X struct {
+	A string `insconfig:"Adefault|large comment A with pipe='|'"`
+	B string `insconfig:"Bdefault|large comment B with pipe='|'"`
+	E *Y     `insconfig:"|---------------------------" yaml:"sacsacasc"`
+	C int
+	D uint8
+	G map[string]int
+	H []int
+}
+
+func Test_TemplateTo(t *testing.T) {
+	x := &X{"1", "2", &Y{}, 3, 4, map[string]int{}, []int{}}
+	w := &bytes.Buffer{}
+	err := insconfig.NewYamlTemplater(x).TemplateTo(w)
+	require.NoError(t, err)
+	nx := X{}
+	require.NoError(t, yaml.Unmarshal(w.Bytes(), &nx))
+	require.NotNil(t, nx.E)
+
 }

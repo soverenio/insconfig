@@ -18,6 +18,7 @@ package insconfig
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -335,4 +336,113 @@ func (i *insConfigurator) ToYaml(c interface{}) string {
 		return fmt.Sprintf("failed to marshal config structure: %v", err)
 	}
 	return string(out)
+}
+
+// Empty config generation part
+
+// you may use insconfig:"default|comment" Tag on struct fields to express your feelings.
+
+type YamlTemplatable interface {
+	TemplateTo(w io.Writer, m *YamlTemplater) error
+}
+
+type YamlTemplater struct {
+	Obj   interface{}       // what are we marshaling right now
+	Level int               // Level of recursion
+	Tag   reflect.StructTag // Tag for current field
+	FName string            // current field name
+}
+
+func NewYamlTemplater(obj interface{}) *YamlTemplater {
+	return &YamlTemplater{
+		Obj:   obj,
+		Level: -1,
+		Tag:   "",
+	}
+}
+
+func (m *YamlTemplater) TemplateTo(w io.Writer) error {
+
+	if o, ok := m.Obj.(YamlTemplatable); ok {
+		return o.TemplateTo(w, m)
+	}
+	// TODO SOLVE me need work on (z *Z)TemplateTo()
+	//if o, ok := (m.Obj).(interface{}).(YamlTemplatable); ok {
+	//	return (o).MarashalToTemplate(w, m)
+	//}
+
+	t := reflect.TypeOf(m.Obj)
+	v := reflect.ValueOf(m.Obj)
+
+	if t.Kind() == reflect.Ptr {
+		m.Obj = v.Elem().Interface()
+		return m.TemplateTo(w)
+	}
+
+	indent := ""
+	if m.Level > 0 {
+		indent = strings.Repeat("  ", m.Level)
+	}
+	d := ""
+	c := ""
+	yfname := ""
+	if cont, ok := m.Tag.Lookup("insconfig"); ok { // detect tags
+		arr := strings.SplitN(cont, "|", 2)
+		d = arr[0]
+		c = arr[1]
+	}
+	if cont, ok := m.Tag.Lookup("yaml"); ok {
+		yfname = cont
+	}
+
+	if c != "" { //write down a comment
+		if _, err := fmt.Fprintf(w, "%s#%s\n", indent, c); err != nil {
+			return err
+		}
+	}
+	if m.FName != "" && t.Kind() != reflect.Array {
+		if yfname == "" {
+			yfname = strings.ToLower(m.FName)
+		}
+		if _, err := fmt.Fprintf(w, "%s%s: ", indent, yfname); err != nil {
+			return err
+		}
+	}
+
+	switch t.Kind() { // main switch
+	case reflect.Struct: //no default
+		if _, err := fmt.Fprint(w, "\n"); err != nil {
+			return err
+		}
+		for i := 0; i < t.NumField(); i++ {
+			if err := (&YamlTemplater{
+				Obj:   v.Field(i).Interface(),
+				Level: m.Level + 1,
+				Tag:   t.Field(i).Tag,
+				FName: t.Field(i).Name,
+			}).TemplateTo(w); err != nil {
+				return errors.Wrapf(err, "in field %s", t.Field(i).Name)
+			}
+		}
+
+	case reflect.Map:
+		_, err := fmt.Fprintf(w, "# <map> of %s \n", t.Elem().Name())
+		return err
+
+	case reflect.Array, reflect.Slice:
+		_, err := fmt.Fprintf(w, "# <array> of %s \n", t.Elem().Name())
+		return err
+
+	case reflect.String, // all scalars
+		reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16,
+		reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16,
+		reflect.Uint32, reflect.Uint64, reflect.Uintptr, reflect.Float32, reflect.Float64,
+		reflect.Complex64, reflect.Complex128:
+		_, err := fmt.Fprintf(w, "%s # %s\n", d, t.Name())
+		return err
+
+	default:
+		return fmt.Errorf("unknown serialization for type %s kind %s (please implement YamlTemplatable)", t.Name(), t.Kind())
+	}
+	return nil
 }
