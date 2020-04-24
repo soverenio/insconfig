@@ -1,4 +1,7 @@
 # insconfig
+
+![test](https://github.com/insolar/insconfig/workflows/test/badge.svg)
+
 Config management library.
 This is the wrapper on https://github.com/spf13/viper library
 

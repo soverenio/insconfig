@@ -1,0 +1,21 @@
+name: test
+
+on:
+  pull_request:
+
+env:
+  GO_VERSION: 1.12.15
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@master
+      - name: set up go ${{env.GO_VERSION}}
+        uses: actions/setup-go@v1
+        with:
+          go-version: ${{env.GO_VERSION}}
+      - name: unit_tests
+        run: go test .
