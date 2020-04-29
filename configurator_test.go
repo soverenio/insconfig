@@ -18,6 +18,8 @@ package insconfig_test
 
 import (
 	"bytes"
+	"errors"
+	"io"
 	"os"
 	"testing"
 
@@ -671,4 +673,19 @@ func Test_TemplateTo(t *testing.T) {
 	require.Contains(t, s, "g: # <map> of int")
 	require.Contains(t, s, "h: # <array> of int")
 
+}
+
+type Z struct {
+	A A
+}
+
+type A struct{}
+
+func (A) TemplateTo(w io.Writer, m *insconfig.YamlTemplater) error {
+	return errors.New("")
+}
+
+func Test_FailTemplateTo(t *testing.T) {
+	w := &bytes.Buffer{}
+	require.NotNil(t, insconfig.NewYamlTemplater(Z{}).TemplateTo(w))
 }
