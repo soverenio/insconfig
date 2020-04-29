@@ -366,10 +366,8 @@ func (m *YamlTemplater) TemplateTo(w io.Writer) error {
 	if o, ok := m.Obj.(YamlTemplatable); ok {
 		return o.TemplateTo(w, m)
 	}
-	// TODO SOLVE me need work on (z *Z)TemplateTo()
-	//if o, ok := (m.Obj).(interface{}).(YamlTemplatable); ok {
-	//	return (o).MarashalToTemplate(w, m)
-	//}
+
+	// HINT  SOLVE me need the same to work on (z *Z)TemplateTo()
 
 	t := reflect.TypeOf(m.Obj)
 	v := reflect.ValueOf(m.Obj)
