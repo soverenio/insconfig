@@ -660,19 +660,19 @@ func Test_TemplateTo(t *testing.T) {
 	require.NoError(t, yaml.Unmarshal(w.Bytes(), &nx))
 	require.NotNil(t, nx.E)
 
-	require.Contains(t, s, "#large comment A with pipe='|'")
-	require.Contains(t, s, "a: Adefault # string")
-	require.Contains(t, s, "#large comment B with pipe='|'")
-	require.Contains(t, s, "b: Bdefault # string")
-	require.Contains(t, s, "#---------------------------")
-	require.Contains(t, s, "sacsacasc:")
-	require.Contains(t, s, "# the F comment")
-	require.Contains(t, s, "f: 111 # int")
-	require.Contains(t, s, "c:  # int")
-	require.Contains(t, s, "d:  # uint8")
-	require.Contains(t, s, "g: # <map> of int")
-	require.Contains(t, s, "h: # <array> of int")
-
+	require.Contains(t, s, `
+#large comment A with pipe='|'
+a: Adefault # string
+#large comment B with pipe='|'
+b: Bdefault # string
+#---------------------------
+sacsacasc: 
+  # the F comment
+  f: 111 # int
+c:  # int
+d:  # uint8
+g: # <map> of int 
+h: # <array> of int`)
 }
 
 type Z struct {
