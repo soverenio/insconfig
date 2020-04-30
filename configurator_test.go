@@ -17,12 +17,15 @@
 package insconfig_test
 
 import (
+	"bytes"
+	"errors"
+	"io"
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/insolar/insconfig"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
 
 type Level3 struct {
@@ -630,4 +633,59 @@ func Test_Load(t *testing.T) {
 			require.Contains(t, err.Error(), `key "first" already set in map`)
 		})
 	})
+}
+
+type Y struct {
+	F int `insconfig:"111| the F comment"`
+}
+
+type X struct {
+	A string `insconfig:"Adefault|large comment A with pipe='|'"`
+	B string `insconfig:"Bdefault|large comment B with pipe='|'"`
+	E *Y     `insconfig:"|---------------------------" yaml:"sacsacasc"`
+	C int
+	D uint8
+	G map[string]int
+	H []int
+}
+
+func Test_TemplateTo(t *testing.T) {
+	x := &X{"1", "2", &Y{}, 3, 4, map[string]int{}, []int{}}
+	w := &bytes.Buffer{}
+	err := insconfig.NewYamlTemplater(x).TemplateTo(w)
+	require.NoError(t, err)
+	s := w.String()
+
+	nx := X{}
+	require.NoError(t, yaml.Unmarshal(w.Bytes(), &nx))
+	require.NotNil(t, nx.E)
+
+	require.Contains(t, s, `
+#large comment A with pipe='|'
+a: Adefault # string
+#large comment B with pipe='|'
+b: Bdefault # string
+#---------------------------
+sacsacasc: 
+  # the F comment
+  f: 111 # int
+c:  # int
+d:  # uint8
+g: # <map> of int 
+h: # <array> of int`)
+}
+
+type Z struct {
+	A A
+}
+
+type A struct{}
+
+func (A) TemplateTo(w io.Writer, m *insconfig.YamlTemplater) error {
+	return errors.New("")
+}
+
+func Test_FailTemplateTo(t *testing.T) {
+	w := &bytes.Buffer{}
+	require.NotNil(t, insconfig.NewYamlTemplater(Z{}).TemplateTo(w))
 }

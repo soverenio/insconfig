@@ -15,7 +15,7 @@ This is the wrapper on https://github.com/spf13/viper library
 - No unnecessary values (both in file and ENV), if not - returns error
 - Supports custom flags, go flags and pflags
 - Doesn't support overriding config by flags
-- [wip] Generates empty yaml file with descriptions
+- Generates empty yaml file with descriptions
 - [wip] By default adds 2 flags --config и --gen-config
 - Doesn't support overriding config on runtime
 - Supports custom viper decode hooks
@@ -93,6 +93,18 @@ func read(){
     println(insconfig.ToString(cfg))
 }
 ```
+
+
+### Dump config Template
+```go
+    type Configuration struct {
+    ...
+        Field Type `insonfig:"default_value|Comment for field in config"`
+    }
+    ...
+    insconfig.NewYamlTemplater(new(Configuration)).TemplateTo(os.StdOut)
+```
+
 ### Using maps in config
 You can use a map in config but there are limitations:
 - only string keys are allowed
