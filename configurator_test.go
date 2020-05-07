@@ -25,7 +25,6 @@ import (
 
 	"github.com/insolar/insconfig"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v2"
 )
 
 type Level3 struct {
@@ -645,20 +644,16 @@ type X struct {
 	E *Y     `insconfig:"|---------------------------" yaml:"sacsacasc"`
 	C int
 	D uint8
-	G map[string]int
-	H []int
+	G map[string]*Y
+	H []*Y
 }
 
 func Test_TemplateTo(t *testing.T) {
-	x := &X{"1", "2", &Y{}, 3, 4, map[string]int{}, []int{}}
+	x := X{}
 	w := &bytes.Buffer{}
 	err := insconfig.NewYamlTemplater(x).TemplateTo(w)
 	require.NoError(t, err)
 	s := w.String()
-
-	nx := X{}
-	require.NoError(t, yaml.Unmarshal(w.Bytes(), &nx))
-	require.NotNil(t, nx.E)
 
 	require.Contains(t, s, `
 #large comment A with pipe='|'
@@ -671,8 +666,14 @@ sacsacasc:
   f: 111 # int
 c:  # int
 d:  # uint8
-g: # <map> of int 
-h: # <array> of int`)
+g: # <map> of *insconfig_test.Y 
+  somekey: 
+    # the F comment
+    f: 111 # int
+h: # <array> of *insconfig_test.Y 
+  - 
+    # the F comment
+    f: 111 # int`)
 }
 
 type Z struct {

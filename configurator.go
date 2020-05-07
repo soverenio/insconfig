@@ -367,13 +367,13 @@ func (m *YamlTemplater) TemplateTo(w io.Writer) error {
 		return o.TemplateTo(w, m)
 	}
 
-	// HINT  SOLVE me need the same to work on (z *Z)TemplateTo()
+	// HINT  m need the same to work on (z *Z)TemplateTo()
 
 	t := reflect.TypeOf(m.Obj)
-	v := reflect.ValueOf(m.Obj)
+	v := reflect.Zero(t)
 
 	if t.Kind() == reflect.Ptr {
-		m.Obj = v.Elem().Interface()
+		m.Obj = reflect.Zero(t.Elem()).Interface()
 		return m.TemplateTo(w)
 	}
 
@@ -424,12 +424,26 @@ func (m *YamlTemplater) TemplateTo(w io.Writer) error {
 		}
 
 	case reflect.Map:
-		_, err := fmt.Fprintf(w, "# <map> of %s \n", t.Elem().Name())
-		return err
+		if _, err := fmt.Fprintf(w, "# <map> of %s \n%s  somekey: ", t.Elem(), indent); err != nil {
+			return err
+		}
+		if err := (&YamlTemplater{
+			Obj:   reflect.Zero(t.Elem()).Interface(),
+			Level: m.Level + 1,
+		}).TemplateTo(w); err != nil {
+			return err
+		}
 
 	case reflect.Array, reflect.Slice:
-		_, err := fmt.Fprintf(w, "# <array> of %s \n", t.Elem().Name())
-		return err
+		if _, err := fmt.Fprintf(w, "# <array> of %s \n%s  - ", t.Elem(), indent); err != nil {
+			return err
+		}
+		if err := (&YamlTemplater{
+			Obj:   reflect.Zero(t.Elem()).Interface(),
+			Level: m.Level + 1,
+		}).TemplateTo(w); err != nil {
+			return err
+		}
 
 	case reflect.String, // all scalars
 		reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16,
