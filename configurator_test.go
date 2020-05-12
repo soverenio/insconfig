@@ -19,6 +19,7 @@ package insconfig_test
 import (
 	"bytes"
 	"errors"
+	"gopkg.in/yaml.v2"
 	"io"
 	"os"
 	"testing"
@@ -639,12 +640,12 @@ type Y struct {
 }
 
 type X struct {
-	A string `insconfig:"Adefault|large comment A with pipe='|'"`
-	B string `insconfig:"Bdefault|large comment B with pipe='|'"`
+	A string `insconfig:"Adefault|large comment A with pipe='|'" insconfigsecret:""`
+	B string `insconfig:"Bdefault|large comment B with pipe='|'" insconfigsecret:""`
 	E *Y     `insconfig:"|---------------------------" yaml:"sacsacasc"`
 	C int
 	D uint8
-	G map[string]*Y
+	G map[string]Y
 	H []*Y
 }
 
@@ -666,7 +667,7 @@ sacsacasc:
   f: 111 # int
 c:  # int
 d:  # uint8
-g: # <map> of *insconfig_test.Y 
+g: # <map> of insconfig_test.Y 
   somekey: 
     # the F comment
     f: 111 # int
@@ -689,4 +690,19 @@ func (A) TemplateTo(w io.Writer, m *insconfig.YamlTemplater) error {
 func Test_FailTemplateTo(t *testing.T) {
 	w := &bytes.Buffer{}
 	require.NotNil(t, insconfig.NewYamlTemplater(Z{}).TemplateTo(w))
+}
+
+func Test_DumpTo(t *testing.T) {
+	x := X{"poison1", "poison2", &Y{-10}, 11, 12,
+		map[string]Y{"aa": Y{222}, "bb": Y{333}},
+		[]*Y{&Y{444}, &Y{555}}}
+	w := &bytes.Buffer{}
+	err := insconfig.NewYamlDumper(x).DumpTo(w)
+	require.NoError(t, err)
+	require.NotContains(t, w.String(), "poison")
+	x2 := X{}
+	require.NoError(t, yaml.Unmarshal(w.Bytes(), &x2))
+	x2.A = x.A
+	x2.B = x.B
+	require.Equal(t, x, x2)
 }
