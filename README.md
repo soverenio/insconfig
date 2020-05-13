@@ -105,6 +105,16 @@ func read(){
     insconfig.NewYamlTemplater(new(Configuration)).TemplateTo(os.StdOut)
 ```
 
+### Dump config with hidden fields
+```go
+    type X struct {
+	    Pass string `insconfigsecret:""`
+    }
+    X=readconfig()
+    insconfig.NewYamlDumper(x).DumpTo(log.Handle())
+```
+
+
 ### Using maps in config
 You can use a map in config but there are limitations:
 - only string keys are allowed

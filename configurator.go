@@ -341,6 +341,7 @@ func (i *insConfigurator) ToYaml(c interface{}) string {
 // Empty config generation part
 
 // you may use insconfig:"default|comment" Tag on struct fields to express your feelings.
+// Also you can use insconfigsecret tag for hide field from dumping its value
 
 type YamlTemplatable interface {
 	TemplateTo(w io.Writer, m *YamlTemplater) error
@@ -367,13 +368,13 @@ func (m *YamlTemplater) TemplateTo(w io.Writer) error {
 		return o.TemplateTo(w, m)
 	}
 
-	// HINT  SOLVE me need the same to work on (z *Z)TemplateTo()
+	// HINT  m need the same to work on (z *Z)TemplateTo()
 
 	t := reflect.TypeOf(m.Obj)
-	v := reflect.ValueOf(m.Obj)
+	v := reflect.Zero(t)
 
 	if t.Kind() == reflect.Ptr {
-		m.Obj = v.Elem().Interface()
+		m.Obj = reflect.Zero(t.Elem()).Interface()
 		return m.TemplateTo(w)
 	}
 
@@ -424,12 +425,26 @@ func (m *YamlTemplater) TemplateTo(w io.Writer) error {
 		}
 
 	case reflect.Map:
-		_, err := fmt.Fprintf(w, "# <map> of %s \n", t.Elem().Name())
-		return err
+		if _, err := fmt.Fprintf(w, "# <map> of %s \n%s  somekey: ", t.Elem(), indent); err != nil {
+			return err
+		}
+		if err := (&YamlTemplater{
+			Obj:   reflect.Zero(t.Elem()).Interface(),
+			Level: m.Level + 1,
+		}).TemplateTo(w); err != nil {
+			return err
+		}
 
 	case reflect.Array, reflect.Slice:
-		_, err := fmt.Fprintf(w, "# <array> of %s \n", t.Elem().Name())
-		return err
+		if _, err := fmt.Fprintf(w, "# <array> of %s \n%s  - ", t.Elem(), indent); err != nil {
+			return err
+		}
+		if err := (&YamlTemplater{
+			Obj:   reflect.Zero(t.Elem()).Interface(),
+			Level: m.Level + 1,
+		}).TemplateTo(w); err != nil {
+			return err
+		}
 
 	case reflect.String, // all scalars
 		reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16,
@@ -442,5 +457,104 @@ func (m *YamlTemplater) TemplateTo(w io.Writer) error {
 	default:
 		return fmt.Errorf("unknown serialization for type %s kind %s (please implement YamlTemplatable)", t.Name(), t.Kind())
 	}
+	return nil
+}
+
+type YamlDumpable interface {
+	DumpTo(w io.Writer, m *YamlDumper) error
+}
+
+type YamlDumper struct {
+	Obj   interface{}       // what are we marshaling right now
+	Level int               // Level of recursion
+	Tag   reflect.StructTag // Tag for current field
+	FName string            // current field name
+}
+
+func NewYamlDumper(obj interface{}) *YamlDumper {
+	return &YamlDumper{
+		Obj:   obj,
+		Level: 0,
+		Tag:   "",
+	}
+}
+
+func (d *YamlDumper) DumpTo(w io.Writer) error {
+
+	if o, ok := d.Obj.(YamlDumpable); ok {
+		return o.DumpTo(w, d)
+	}
+
+	t := reflect.TypeOf(d.Obj)
+	v := reflect.ValueOf(d.Obj)
+
+	if t.Kind() == reflect.Ptr {
+		d.Obj = v.Elem().Interface()
+		return d.DumpTo(w)
+	}
+
+	if _, ok := d.Tag.Lookup("insconfigsecret"); ok { // detect tags
+		v = reflect.ValueOf(`"*****"`)
+	}
+
+	indent := strings.Repeat("  ", d.Level)
+
+	switch t.Kind() { // main switch
+	case reflect.Struct: //no default
+		fmt.Fprint(w, "\n")
+		for i := 0; i < t.NumField(); i++ {
+			v := v.Field(i)
+			t := t.Field(i)
+			yfname := ""
+			if cont, ok := t.Tag.Lookup("yaml"); ok {
+				yfname = cont
+			} else {
+				yfname = strings.ToLower(t.Name)
+			}
+			fmt.Fprintf(w, "%s%s: ", indent, yfname)
+			if err := (&YamlDumper{
+				Obj:   v.Interface(),
+				Level: d.Level + 1,
+				Tag:   t.Tag,
+				FName: t.Name,
+			}).DumpTo(w); err != nil {
+				return errors.Wrapf(err, "in field %s", t.Name)
+			}
+		}
+
+	case reflect.Map:
+		fmt.Fprint(w, "\n")
+		i := v.MapRange()
+		for i.Next() {
+			fmt.Fprintf(w, "%s%s: ", indent, i.Key().Interface())
+			if err := (&YamlDumper{
+				Obj:   i.Value().Interface(),
+				Level: d.Level + 1,
+			}).DumpTo(w); err != nil {
+				return err
+			}
+		}
+
+	case reflect.Array, reflect.Slice:
+		fmt.Fprint(w, "\n")
+		for i := 0; i < v.Len(); i++ {
+			fmt.Fprintf(w, "%s - ", indent)
+			if err := (&YamlDumper{
+				Obj:   v.Index(i).Interface(),
+				Level: d.Level + 1,
+			}).DumpTo(w); err != nil {
+				return err
+			}
+		}
+
+	case reflect.String, // all scalars
+		reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16,
+		reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16,
+		reflect.Uint32, reflect.Uint64, reflect.Uintptr, reflect.Float32, reflect.Float64,
+		reflect.Complex64, reflect.Complex128:
+		_, err := fmt.Fprintf(w, "%v\n", v.Interface())
+		return err
+	}
+
 	return nil
 }
