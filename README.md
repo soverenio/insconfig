@@ -137,6 +137,8 @@ func read(){
 
 ### Generating a configuration template
 
+Tip: You can use tags to enrich a field with a default value and a comment for this value; both will end up in your template. 
+
 If you want to create a config file example and you have a ready config structure, consider this example:
 
 ```go
@@ -147,8 +149,6 @@ If you want to create a config file example and you have a ready config structur
     ...
     insconfig.NewYamlTemplater(new(Config)).TemplateTo(os.StdOut)
 ```
-
-Tip: You can use tags to enrich a field with a default value and a comment for this value; both will end up in your template. 
 
 ### Generating a configuration template with hidden fields
 
