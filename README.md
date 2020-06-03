@@ -97,7 +97,7 @@ go
 
 #### Custom [spf13/cobra flags](https://github.com/spf13/cobra). 
 
-Note: Cobra doesn't provide tools for managing flags parsing, so you need to add the `--config flag yourself.
+Note: Cobra doesn't provide tools for managing flags parsing, so you need to add the `--config` flag yourself.
 
 ```go
 func main () {
@@ -152,7 +152,7 @@ If you want to create a config file example and you have a ready config structur
 
 ### Generating a configuration template with hidden fields
 
-If you have some sensitive data you may want to hide it in a config. You can use the `insconfigsecret` tag to hide such data.
+If you have some sensitive data, you may want to hide it in a config. You can use the `insconfigsecret` tag to hide such data.
 
 ```go
     type Config struct {
