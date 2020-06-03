@@ -97,7 +97,7 @@ go
 
 #### Custom [spf13/cobra flags](https://github.com/spf13/cobra). 
 
-Note: Cobra doesn't provide tools for managing flags parsing, so you need to add the `--config` flag yourself.
+Note: Cobra doesn't provide tools that manage flags parsing, so you need to add the `--config` flag yourself.
 
 ```go
 func main () {
