@@ -24,8 +24,8 @@ Insolar is extensively documented. If you need more information on what is Insol
 - Support of custom flags, go flags and pflags.
 - No overriding configutation files by flags.
 - Option to generate an empty .yaml file with field descriptions.
-- Automatic adding of the `--config` flag
-- [work in progress] Automatic of the `--gen-config` flag
+- Automatic adding of the `--config` flag.
+- [work in progress] Automatic of the `--gen-config` flag.
 - No overriding app configuration on the fly.
 - Support of custom Viper decode hooks.
 
