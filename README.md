@@ -31,21 +31,26 @@ Insolar is extensively documented. If you need more information on what is Insol
 
 ## Usage
 
-### In terminal
+Consider the example in `./example/example.go`.
 
-Consider this example:
+Run the example:
 
+```go
+run ./example/example.go --config="./example/example_config.yaml"
 ```
-go run ./example/example.go --config="./example/example_config.yaml"
-```
+In addition:
 
-## In your code
+* Test the code snippets below by replacing the contents of `func main()` in `example.go` with them.
+
+* Modify the snippets appropriately to include them directly into your code. Pay attention to variable and configuration field contents.
 
 Tip: Don't forget to add `github.com/insolar/insconfig` to the import section.
 
+Note: `EnvPrefix` value shouldn't have any delimiters: `EnvPrefix: "incorrect example"` has incorrect syntax, while `EnvPrefix: "correctexample"` has correct syntax.
+
 ### No flags
 
-If you don't use any flags and DefaultPathGetter, which adds the `--config` flag so you can start right away, consider this example:
+If you don't use any flags and DefaultPathGetter, which adds the `--config` flag so you can start right away, consider this example for `func main()`:
 
 ```
 mconf := &Config{}	
@@ -58,15 +63,15 @@ mconf := &Config{}
 		panic(err)
 	}
 	insConfigurator.ToYaml(mconf)
+	fmt.Println(insConfigurator.ToYaml(mconf))
 ```
 
 ### Custom flags
 
 #### Custom Go flags (from example.go)
 
-```
-go
-    var flag_example_1 = flag.String("flag_example_1", "", "flag_example_1_desc")
+```go
+    var flag_example_1 = flag.String("flag_example_1", "example_value", "flag_example_1_desc")
     mconf := Config{}
     params := insconfig.Params{
 	EnvPrefix:    "example",
@@ -76,7 +81,8 @@ go
     }
     insConfigurator := insconfig.New(params)
     _ = insConfigurator.Load(&mconf)
-    fmt.Println(flag_example_1)
+    fmt.Println(*flag_example_1)
+    fmt.Println(insConfigurator.ToYaml(mconf))
 ```
 
 #### Custom [spf13/pflags](https://github.com/spf13/pflag)
@@ -92,7 +98,8 @@ go
     }
     insConfigurator := insconfig.New(params)
     _ = insConfigurator.Load(&mconf)
-    fmt.Println(testflag1)
+    fmt.Println(flag_example_1)
+    fmt.Println(insConfigurator.ToYaml(mconf))
 ```
 
 #### Custom [spf13/cobra flags](https://github.com/spf13/cobra). 
@@ -100,37 +107,36 @@ go
 Note: Cobra doesn't provide tools that manage flags parsing, so you need to add the `--config` flag yourself.
 
 ```go
-func main () {
-    var configPath string
-    rootCmd := &cobra.Command{
-        Use: "insolard",
-    }
-    rootCmd.PersistentFlags().StringVarP(&configPath, "config", "c", "", "path to config file")
-    _ = rootCmd.MarkPersistentFlagRequired("config")
-    err := rootCmd.Execute()
-
-    // ...
-
-    // To set your path from flag to insconfig you need to implement simple ConfigPathGetter interface and return path 
-    type stringPathGetter struct {
-        Path string
-    }
-    
-    func (g *stringPathGetter) GetConfigPath() string {
-        return g.Path
-    }
+// To set your path from flag to insconfig you need to implement simple ConfigPathGetter interface and return path
+type stringPathGetter struct {
+	Path string
 }
-
-func read(){
-    mconf := Config{}
-    params := insconfig.Params{
-        EnvPrefix:        "example",
-        ConfigPathGetter: &stringPathGetter{Path: configPath},
-        FileRequired:     false,
-    }
-    insConfigurator := insconfig.NewInsConfigurator(h.Params)
-    err := insConfigurator.Load(&mconf)
-    println(insconfig.ToString(mconf))
+func (g *stringPathGetter) GetConfigPath() string {
+	return g.Path
+}
+func main() {
+	var configPath string
+	rootCmd := &cobra.Command{
+		Use: "your_command_name",
+	}
+	rootCmd.PersistentFlags().StringVarP(&configPath, "config", "c", "", "path to config file")
+	_ = rootCmd.MarkPersistentFlagRequired("config")
+	err := rootCmd.Execute()
+	if err != nil {
+		panic(err)
+	}
+	cfg := Config{}
+	params := insconfig.Params{
+		EnvPrefix:        "example",
+		ConfigPathGetter: &stringPathGetter{Path: configPath},
+		FileNotRequired:     true,
+	}
+	insConfigurator := insconfig.New(params)
+	err = insConfigurator.Load(&cfg)
+	if err != nil {
+		panic(err)
+	}
+	println(insConfigurator.ToYaml(cfg))
 }
 ```
 
