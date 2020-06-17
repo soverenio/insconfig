@@ -39,14 +39,15 @@ Run the example:
 run ./example/example.go --config="./example/example_config.yaml"
 ```
 
-To test the code examples below, add them to `example.go` or test them directly in your code.
+In addition, make amendments to `example.go` as shown in the code snippets below to test various options. 
+Modify the snippets appropriately to include them directly into your code.
 
 Tip: Don't forget to add `github.com/insolar/insconfig` to the import section.
 Note: `EnvPrefix` value shouldn't have any delimiters: `EnvPrefix: "incorrect example"` has incorrect syntax, while `EnvPrefix: "correctexample"` has correct syntax.
 
 ### No flags
 
-If you don't use any flags and DefaultPathGetter, which adds the `--config` flag so you can start right away, consider this example:
+If you don't use any flags and DefaultPathGetter, which adds the `--config` flag so you can start right away, consider this example for `func main()`:
 
 ```
 mconf := &Config{}	
