@@ -31,15 +31,15 @@ Insolar is extensively documented. If you need more information on what is Insol
 
 ## Usage
 
-### In terminal
+Consider the example in `./example/example.go`.
 
-Consider this example:
+Run the example:
 
+```go
+run ./example/example.go --config="./example/example_config.yaml"
 ```
-go run ./example/example.go --config="./example/example_config.yaml"
-```
 
-## In your code
+To test the code examples below, add them to `example.go` or test them directly in your code.
 
 Tip: Don't forget to add `github.com/insolar/insconfig` to the import section.
 Note: `EnvPrefix` value shouldn't have any delimiters: `EnvPrefix: "incorrect example"` has incorrect syntax, while `EnvPrefix: "correctexample"` has correct syntax.
