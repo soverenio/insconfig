@@ -44,6 +44,7 @@ In addition, make amendments to `example.go` as shown in the code snippets below
 Modify the snippets appropriately to include them directly into your code.
 
 Tip: Don't forget to add `github.com/insolar/insconfig` to the import section.
+
 Note: `EnvPrefix` value shouldn't have any delimiters: `EnvPrefix: "incorrect example"` has incorrect syntax, while `EnvPrefix: "correctexample"` has correct syntax.
 
 ### No flags
