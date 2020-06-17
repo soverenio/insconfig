@@ -40,6 +40,7 @@ run ./example/example.go --config="./example/example_config.yaml"
 ```
 
 In addition, make amendments to `example.go` as shown in the code snippets below to test various options. 
+
 Modify the snippets appropriately to include them directly into your code.
 
 Tip: Don't forget to add `github.com/insolar/insconfig` to the import section.
