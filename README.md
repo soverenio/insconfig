@@ -38,11 +38,11 @@ Run the example:
 ```go
 run ./example/example.go --config="./example/example_config.yaml"
 ```
+In addition:
 
-In addition, make amendments to `example.go` as shown in the code snippets below to test various options. 
+* Test the code snippets below by replacing the contents of `func main()` in `example.go` with them.
 
-Modify the snippets appropriately to include them directly into your code.
-
+* Modify the snippets appropriately to include them directly into your code. Pay attention to variable and configuration field contents.
 
 Tip: Don't forget to add `github.com/insolar/insconfig` to the import section.
 
