@@ -688,7 +688,7 @@ func (m *YamlTemplaterStruct) TemplateTo(w io.Writer) error {
 		return err
 
 	default:
-		return fmt.Errorf("unknown serialization for type %s kind %s (please implement YamlTemplatable)", t.Name(), t.Kind())
+		return fmt.Errorf("unknown serialization for type %s kind %s (please implement YamlTemplatableStruct)", t.Name(), t.Kind())
 	}
 	return nil
 }
