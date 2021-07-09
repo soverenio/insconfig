@@ -143,18 +143,24 @@ func main() {
 
 ### Generating a configuration template
 
-Tip: You can use tags to enrich a field with a default value and a comment for this value; both will end up in your template. 
+Tip: You can use tags to enrich a field with a comment, and it will end up in your template. 
 
 If you want to create a config file example and you have a ready config structure, consider this example:
 
 ```go
     type Config struct {
     ... 
-        Field Type `insonfig:"default_value|Commentary for this field"`
+        Field Type `insonfig:"Commentary for this field"`
     }
     ...
-    insconfig.NewYamlTemplater(new(Config)).TemplateTo(os.StdOut)
+    cfg := Config{
+        ...
+        Field: "default_value",
+    }
+    insconfig.NewYamlTemplaterStruct(cfg).TemplateTo(os.StdOut)
 ```
+
+As you see, default value for a field can be provided via instance of config structure.
 
 ### Generating a configuration template with hidden fields
 
