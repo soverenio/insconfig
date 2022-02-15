@@ -615,7 +615,7 @@ func (m *YamlTemplaterStruct) TemplateTo(w io.Writer) error {
 	yfname := ""
 	if cont, ok := m.Tag.Lookup("insconfig"); ok { // detect tags
 		arr := strings.SplitN(cont, "|", 2)
-		c = arr[len(arr)-1]
+		c = strings.TrimSpace(arr[len(arr)-1])
 	}
 	if cont, ok := m.Tag.Lookup("yaml"); ok {
 		yfname = cont
