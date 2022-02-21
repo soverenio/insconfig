@@ -19,13 +19,14 @@ package insconfig_test
 import (
 	"bytes"
 	"errors"
-	"gopkg.in/yaml.v2"
 	"io"
 	"os"
 	"testing"
 
-	"github.com/insolar/insconfig"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
+
+	"github.com/insolar/insconfig"
 )
 
 type Level3 struct {
@@ -693,9 +694,11 @@ func Test_FailTemplateTo(t *testing.T) {
 }
 
 func Test_DumpTo(t *testing.T) {
-	x := X{"poison1", "poison2", &Y{-10}, 11, 12,
+	x := X{
+		"poison1", "poison2", &Y{-10}, 11, 12,
 		map[string]Y{"aa": Y{222}, "bb": Y{333}},
-		[]*Y{&Y{444}, &Y{555}}}
+		[]*Y{&Y{444}, &Y{555}},
+	}
 	w := &bytes.Buffer{}
 	err := insconfig.NewYamlDumper(x).DumpTo(w)
 	require.NoError(t, err)
@@ -705,116 +708,4 @@ func Test_DumpTo(t *testing.T) {
 	x2.A = x.A
 	x2.B = x.B
 	require.Equal(t, x, x2)
-}
-
-type Config struct {
-	Simple       string            `insconfig:"Example secret value" insconfigsecret:""`
-	List         []string          `insconfig:"List"`
-	Map          map[string]string `insconfig:"Map"`
-	ListOfStruct []Inner           `insconfig:"List of structs"`
-	MapOfStruct  map[string]Inner  `insconfig:"Map of structs"`
-	Inner        Inner
-}
-
-type Inner struct {
-	F1 string `insconfig:"First inner field"`
-	F2 string `insconfig:"Second inner field"`
-}
-
-func NewConfig() Config {
-	cfg := Config{
-		Simple: "example",
-		List:   []string{"val1", "val2", "val3"},
-		Map: map[string]string{
-			"key1": "value1",
-			"key2": "value2",
-			"key3": "value3",
-		},
-		ListOfStruct: []Inner{
-			{
-				F1: "firstValue",
-				F2: "secondValue",
-			}, {
-				F1: "value1",
-				F2: "value2",
-			},
-		},
-		MapOfStruct: map[string]Inner{
-			"key1": {
-				F1: "value1",
-				F2: "value2",
-			},
-			"key2": {
-				F1: "value3",
-				F2: "value4",
-			},
-		},
-		Inner: Inner{
-			F1: "innerField1",
-			F2: "innerField2",
-		},
-	}
-
-	return cfg
-}
-
-func TestTemplaterStruct_TemplateTo(t *testing.T) {
-	w := &bytes.Buffer{}
-	err := insconfig.NewYamlTemplaterStruct(NewConfig()).TemplateTo(w)
-	require.NoError(t, err)
-	s := w.String()
-
-	require.Contains(t, s, `
-# Example secret value
-simple: example # string
-# List
-list: # <array> of string`)
-	require.Contains(t, s, `- val1 # string`)
-	require.Contains(t, s, `- val2 # string`)
-	require.Contains(t, s, `- val3 # string`)
-	require.Contains(t, s, `
-# Map
-map: # <map> of string`)
-	require.Contains(t, s, `
-  key1: value1 # string`)
-	require.Contains(t, s, `
-  key2: value2 # string`)
-	require.Contains(t, s, `
-  key3: value3 # string`)
-	require.Contains(t, s, `
-# List of structs
-listofstruct: # <array> of insconfig_test.Inner`)
-	require.Contains(t, s, `
-  - 
-    # First inner field
-    f1: firstValue # string
-    # Second inner field
-    f2: secondValue # string`)
-	require.Contains(t, s, `
-  - 
-    # First inner field
-    f1: value1 # string
-    # Second inner field
-    f2: value2 # string`)
-	require.Contains(t, s, `
-# Map of structs
-mapofstruct: # <map> of insconfig_test.Inner `)
-	require.Contains(t, s, `
-  key1: 
-    # First inner field
-    f1: value1 # string
-    # Second inner field
-    f2: value2 # string`)
-	require.Contains(t, s, `
-  key2: 
-    # First inner field
-    f1: value3 # string
-    # Second inner field
-    f2: value4 # string`)
-	require.Contains(t, s, `
-inner: 
-  # First inner field
-  f1: innerField1 # string
-  # Second inner field
-  f2: innerField2 # string`)
 }

@@ -402,7 +402,7 @@ func (m *YamlTemplater) TemplateTo(w io.Writer) error {
 		yfname = cont
 	}
 
-	if c != "" { //write down a comment
+	if c != "" { // write down a comment
 		if _, err := fmt.Fprintf(w, "%s#%s\n", indent, c); err != nil {
 			return err
 		}
@@ -417,7 +417,7 @@ func (m *YamlTemplater) TemplateTo(w io.Writer) error {
 	}
 
 	switch t.Kind() { // main switch
-	case reflect.Struct: //no default
+	case reflect.Struct: // no default
 		if _, err := fmt.Fprint(w, "\n"); err != nil {
 			return err
 		}
@@ -508,7 +508,7 @@ func (d *YamlDumper) DumpTo(w io.Writer) error {
 	indent := strings.Repeat("  ", d.Level)
 
 	switch t.Kind() { // main switch
-	case reflect.Struct: //no default
+	case reflect.Struct: // no default
 		fmt.Fprint(w, "\n")
 		for i := 0; i < t.NumField(); i++ {
 			v := v.Field(i)
@@ -564,131 +564,5 @@ func (d *YamlDumper) DumpTo(w io.Writer) error {
 		return err
 	}
 
-	return nil
-}
-
-// Empty config generation from struct part
-
-// you may use insconfig:"comment" Tag on struct fields to express your feelings.
-// default values goes from provided obj
-
-type YamlTemplatableStruct interface {
-	TemplateTo(w io.Writer, m *YamlTemplaterStruct) error
-}
-
-type YamlTemplaterStruct struct {
-	Obj   interface{}       // what are we marshaling right now
-	Level int               // Level of recursion
-	Tag   reflect.StructTag // Tag for current field
-	FName string            // current field name
-}
-
-func NewYamlTemplaterStruct(obj interface{}) *YamlTemplaterStruct {
-	return &YamlTemplaterStruct{
-		Obj:   obj,
-		Level: -1,
-		Tag:   "",
-	}
-}
-
-func (m *YamlTemplaterStruct) TemplateTo(w io.Writer) error {
-
-	if o, ok := m.Obj.(YamlTemplatableStruct); ok {
-		return o.TemplateTo(w, m)
-	}
-
-	// HINT  m need the same to work on (z *Z)TemplateTo()
-
-	t := reflect.TypeOf(m.Obj)
-	v := reflect.ValueOf(m.Obj)
-
-	if t.Kind() == reflect.Ptr {
-		m.Obj = v.Elem().Interface()
-		return m.TemplateTo(w)
-	}
-
-	indent := ""
-	if m.Level > 0 {
-		indent = strings.Repeat("  ", m.Level)
-	}
-	c := ""
-	yfname := ""
-	if cont, ok := m.Tag.Lookup("insconfig"); ok { // detect tags
-		arr := strings.SplitN(cont, "|", 2)
-		c = strings.TrimSpace(arr[len(arr)-1])
-	}
-	if cont, ok := m.Tag.Lookup("yaml"); ok {
-		yfname = cont
-	}
-
-	if c != "" { //write down a comment
-		if _, err := fmt.Fprintf(w, "%s# %s\n", indent, c); err != nil {
-			return err
-		}
-	}
-	if m.FName != "" && t.Kind() != reflect.Array {
-		if yfname == "" {
-			yfname = strings.ToLower(m.FName)
-		}
-		if _, err := fmt.Fprintf(w, "%s%s: ", indent, yfname); err != nil {
-			return err
-		}
-	}
-
-	switch t.Kind() { // main switch
-	case reflect.Struct: //no default
-		if _, err := fmt.Fprint(w, "\n"); err != nil {
-			return err
-		}
-		for i := 0; i < t.NumField(); i++ {
-			if err := (&YamlTemplaterStruct{
-				Obj:   v.Field(i).Interface(),
-				Level: m.Level + 1,
-				Tag:   t.Field(i).Tag,
-				FName: t.Field(i).Name,
-			}).TemplateTo(w); err != nil {
-				return errors.Wrapf(err, "in field %s", t.Field(i).Name)
-			}
-		}
-
-	case reflect.Map:
-		if _, err := fmt.Fprintf(w, "# <map> of %s \n", t.Elem()); err != nil {
-			return err
-		}
-		i := v.MapRange()
-		for i.Next() {
-			fmt.Fprintf(w, "%s  %s: ", indent, i.Key().Interface())
-			if err := (&YamlTemplaterStruct{
-				Obj:   i.Value().Interface(),
-				Level: m.Level + 1,
-			}).TemplateTo(w); err != nil {
-				return err
-			}
-		}
-	case reflect.Array, reflect.Slice:
-		if _, err := fmt.Fprintf(w, "# <array> of %s \n", t.Elem()); err != nil {
-			return err
-		}
-		for i := 0; i < v.Len(); i++ {
-			fmt.Fprintf(w, "%s  - ", indent)
-			if err := (&YamlTemplaterStruct{
-				Obj:   v.Index(i).Interface(),
-				Level: m.Level + 1,
-			}).TemplateTo(w); err != nil {
-				return err
-			}
-		}
-
-	case reflect.String, // all scalars
-		reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16,
-		reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16,
-		reflect.Uint32, reflect.Uint64, reflect.Uintptr, reflect.Float32, reflect.Float64,
-		reflect.Complex64, reflect.Complex128:
-		_, err := fmt.Fprintf(w, "%v # %s\n", v.Interface(), t.Name())
-		return err
-
-	default:
-		return fmt.Errorf("unknown serialization for type %s kind %s (please implement YamlTemplatableStruct)", t.Name(), t.Kind())
-	}
 	return nil
 }
