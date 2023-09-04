@@ -6,7 +6,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/insolar/vanilla/throw"
+	"github.com/soverenio/vanilla/throw"
+
 	"github.com/soverenio/insconfig/utils"
 )
 
