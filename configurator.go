@@ -35,15 +35,17 @@ type ConfigPathGetter interface {
 }
 
 type insConfigurator struct {
-	params Params
-	viper  *viper.Viper
+	params     Params
+	viper      *viper.Viper
+	configPath string
 }
 
 // New creates new insConfigurator with params
 func New(params Params) insConfigurator {
 	return insConfigurator{
-		params: params,
-		viper:  viper.New(),
+		params:     params,
+		configPath: params.ConfigPathGetter.GetConfigPath(),
+		viper:      viper.New(),
 	}
 }
 
@@ -57,8 +59,7 @@ func (i *insConfigurator) Load(configStruct interface{}) error {
 		return errors.New("ConfigPathGetter should be defined")
 	}
 
-	configPath := i.params.ConfigPathGetter.GetConfigPath()
-	return i.load(configPath, configStruct)
+	return i.load(i.configPath, configStruct)
 }
 
 func (i *insConfigurator) load(path string, configStruct interface{}) error {

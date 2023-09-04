@@ -1,4 +1,4 @@
-module github.com/insolar/insconfig
+module github.com/soverenio/insconfig
 
 go 1.17
 

@@ -12,7 +12,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/stretchr/testify/require"
 
-	"github.com/insolar/insconfig"
+	"github.com/soverenio/insconfig"
 )
 
 type Level4 struct {

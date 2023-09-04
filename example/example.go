@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/insolar/insconfig"
+	"github.com/soverenio/insconfig"
 )
 
 var testflag1 = flag.String("testflag1", "", "testflag1")

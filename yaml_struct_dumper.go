@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/insolar/insconfig/utils"
 	"github.com/insolar/vanilla/throw"
+	"github.com/soverenio/insconfig/utils"
 )
 
 // Empty config generation from struct part

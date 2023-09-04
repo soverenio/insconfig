@@ -2,7 +2,7 @@
 
 # Insolar configurations
 
-![test](https://github.com/insolar/insconfig/workflows/test/badge.svg)
+![test](https://github.com/soverenio/insconfig/workflows/test/badge.svg)
 
 Insolar configurations unify configuring for all Insolar applications: [Assured Ledger](https://github.com/insolar/assured-ledger), [Insolar Observer](https://github.com/insolar/observer), [Insolar MainNet](https://github.com/insolar/mainnet), [Insolar Explorer](https://github.com/insolar/block-explorer) and more.
 
@@ -44,7 +44,7 @@ In addition:
 
 * Modify the snippets appropriately to include them directly into your code. Pay attention to variable and configuration field contents.
 
-Tip: Don't forget to add `github.com/insolar/insconfig` to the import section.
+Tip: Don't forget to add `github.com/soverenio/insconfig` to the import section.
 
 Note: `EnvPrefix` value shouldn't have any delimiters: `EnvPrefix: "incorrect example"` has incorrect syntax, while `EnvPrefix: "correctexample"` has correct syntax.
 

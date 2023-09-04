@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 
-	"github.com/insolar/insconfig"
+	"github.com/soverenio/insconfig"
 )
 
 type Level3 struct {
