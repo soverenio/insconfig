@@ -1,8 +1,3 @@
-// Copyright 2020 Insolar Network Ltd.
-// All rights reserved.
-// This material is licensed under the Insolar License version 1.0,
-// available at https://github.com/insolar/insolar/blob/master/LICENSE.md.
-
 package backward_compatibility_tests
 
 // The purpose of this package is to implement tests that refer to all existing public objects
@@ -14,9 +9,10 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/insolar/insconfig"
 	"github.com/mitchellh/mapstructure"
 	"github.com/stretchr/testify/require"
+
+	"github.com/insolar/insconfig"
 )
 
 type Level4 struct {

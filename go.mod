@@ -3,7 +3,7 @@ module github.com/insolar/insconfig
 go 1.17
 
 require (
-	github.com/insolar/vanilla v0.0.0-20201023172447-248fdf805322
+	github.com/insolar/vanilla v0.0.0-20230829125520-cdc42b66dd87
 	github.com/mitchellh/mapstructure v1.4.3
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/pflag v1.0.5
